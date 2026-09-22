@@ -1,0 +1,933 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta
+      name="description"
+      content="Báo cáo ước tính chi phí vận hành Issue Triage mini-app cho 10.000 issues/tháng - BTVN #2 Môn Agentic AI (UIT)."
+    />
+    <title>Báo Cáo Ước Tính Chi Phí — Issue Triage Mini-App</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Outfit:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --bg-main: #0f141c;
+        --bg-surface: #18202d;
+        --bg-card: #1e2838;
+        --bg-card-hover: #243144;
+        --primary: #3b82f6;
+        --primary-glow: rgba(59, 130, 246, 0.25);
+        --accent: #f59e0b;
+        --accent-glow: rgba(245, 158, 11, 0.2);
+        --success: #10b981;
+        --success-glow: rgba(16, 185, 129, 0.2);
+        --danger: #ef4444;
+        --text-primary: #f1f5f9;
+        --text-secondary: #94a3b8;
+        --text-muted: #64748b;
+        --border-subtle: #293548;
+        --border-highlight: #3b4d68;
+        --font-main:
+          "Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, sans-serif;
+        --font-heading: "Outfit", sans-serif;
+        --font-mono: "JetBrains Mono", monospace;
+        --shadow-card:
+          0 10px 25px -5px rgba(0, 0, 0, 0.3),
+          0 8px 10px -6px rgba(0, 0, 0, 0.3);
+      }
+
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      body {
+        background-color: var(--bg-main);
+        color: var(--text-primary);
+        font-family: var(--font-main);
+        line-height: 1.65;
+        -webkit-font-smoothing: antialiased;
+        padding-bottom: 5rem;
+      }
+
+      .container {
+        max-width: 1160px;
+        margin: 0 auto;
+        padding: 0 1.5rem;
+      }
+
+      /* Hero Header */
+      .hero {
+        padding: 4rem 0 3rem;
+        background:
+          radial-gradient(circle at 50% -20%, #1e3a8a 0%, transparent 60%),
+          radial-gradient(circle at 80% 20%, #854d0e 0%, transparent 35%);
+        border-bottom: 1px solid var(--border-subtle);
+        margin-bottom: 3rem;
+      }
+
+      .badge-uit {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.35rem 0.85rem;
+        border-radius: 9999px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        font-family: var(--font-mono);
+        background: rgba(59, 130, 246, 0.12);
+        border: 1px solid rgba(59, 130, 246, 0.3);
+        color: #60a5fa;
+        margin-bottom: 1.25rem;
+      }
+
+      .hero h1 {
+        font-family: var(--font-heading);
+        font-size: 2.75rem;
+        font-weight: 800;
+        letter-spacing: -0.02em;
+        line-height: 1.2;
+        margin-bottom: 1rem;
+        background: linear-gradient(135deg, #ffffff 30%, #94a3b8 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+      }
+
+      .hero-desc {
+        color: var(--text-secondary);
+        font-size: 1.15rem;
+        max-width: 800px;
+        margin-bottom: 2rem;
+      }
+
+      .meta-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 1rem;
+        margin-top: 1.5rem;
+      }
+
+      .meta-item {
+        background: rgba(24, 32, 45, 0.65);
+        backdrop-filter: blur(10px);
+        border: 1px solid var(--border-subtle);
+        border-radius: 12px;
+        padding: 1rem 1.25rem;
+      }
+
+      .meta-label {
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: var(--text-muted);
+        font-family: var(--font-mono);
+        margin-bottom: 0.25rem;
+      }
+
+      .meta-value {
+        font-weight: 600;
+        font-size: 0.95rem;
+        color: var(--text-primary);
+      }
+
+      /* Sections */
+      .section-title {
+        font-family: var(--font-heading);
+        font-size: 1.85rem;
+        font-weight: 700;
+        margin-bottom: 1.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        color: #fff;
+      }
+
+      .section-title span.number {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 2rem;
+        height: 2rem;
+        border-radius: 8px;
+        background: var(--primary);
+        color: #fff;
+        font-size: 1rem;
+        font-family: var(--font-mono);
+      }
+
+      .card {
+        background: var(--bg-surface);
+        border: 1px solid var(--border-subtle);
+        border-radius: 16px;
+        padding: 1.75rem;
+        margin-bottom: 2rem;
+        box-shadow: var(--shadow-card);
+      }
+
+      /* Token measurement breakdown */
+      .token-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+        gap: 1.25rem;
+        margin: 1.5rem 0;
+      }
+
+      .token-card {
+        background: var(--bg-card);
+        border: 1px solid var(--border-highlight);
+        border-radius: 12px;
+        padding: 1.25rem;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .token-card::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 4px;
+        height: 100%;
+        background: var(--primary);
+      }
+
+      .token-card.output::before {
+        background: var(--accent);
+      }
+
+      .token-card.total::before {
+        background: var(--success);
+      }
+
+      .token-card-title {
+        font-size: 0.85rem;
+        font-family: var(--font-mono);
+        color: var(--text-muted);
+        text-transform: uppercase;
+        margin-bottom: 0.5rem;
+      }
+
+      .token-card-number {
+        font-family: var(--font-heading);
+        font-size: 2.25rem;
+        font-weight: 800;
+        color: #fff;
+        margin-bottom: 0.25rem;
+      }
+
+      .token-card-desc {
+        font-size: 0.825rem;
+        color: var(--text-secondary);
+      }
+
+      /* Code block */
+      .code-snippet {
+        background: #0b0f16;
+        border: 1px solid var(--border-subtle);
+        border-radius: 10px;
+        padding: 1.25rem;
+        font-family: var(--font-mono);
+        font-size: 0.85rem;
+        color: #38bdf8;
+        overflow-x: auto;
+        margin: 1rem 0;
+        line-height: 1.5;
+      }
+
+      .code-snippet .comment {
+        color: var(--text-muted);
+      }
+
+      /* Table styling */
+      .table-wrapper {
+        overflow-x: auto;
+        border-radius: 12px;
+        border: 1px solid var(--border-subtle);
+        margin: 1.5rem 0;
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        text-align: left;
+        font-size: 0.925rem;
+      }
+
+      th {
+        background: #131b26;
+        color: var(--text-secondary);
+        font-family: var(--font-mono);
+        font-size: 0.8rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        padding: 1rem 1.25rem;
+        border-bottom: 1px solid var(--border-subtle);
+      }
+
+      td {
+        padding: 1rem 1.25rem;
+        border-bottom: 1px solid var(--border-subtle);
+        color: var(--text-primary);
+      }
+
+      tr:last-child td {
+        border-bottom: none;
+      }
+
+      tr:hover td {
+        background: rgba(255, 255, 255, 0.02);
+      }
+
+      .highlight-row {
+        background: rgba(59, 130, 246, 0.07) !important;
+      }
+
+      .badge {
+        display: inline-block;
+        padding: 0.2rem 0.55rem;
+        border-radius: 6px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        font-family: var(--font-mono);
+      }
+
+      .badge-free {
+        background: rgba(16, 185, 129, 0.15);
+        color: #34d399;
+        border: 1px solid rgba(16, 185, 129, 0.3);
+      }
+
+      .badge-prod {
+        background: rgba(59, 130, 246, 0.15);
+        color: #60a5fa;
+        border: 1px solid rgba(59, 130, 246, 0.3);
+      }
+
+      .badge-premium {
+        background: rgba(245, 158, 11, 0.15);
+        color: #fbbf24;
+        border: 1px solid rgba(245, 158, 11, 0.3);
+      }
+
+      /* Interactive Calculator */
+      .calculator {
+        background: linear-gradient(145deg, #1b2434 0%, #161e2c 100%);
+        border: 1px solid var(--border-highlight);
+        border-radius: 16px;
+        padding: 2rem;
+        margin: 2rem 0;
+      }
+
+      .calc-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+      }
+
+      .calc-title {
+        font-family: var(--font-heading);
+        font-size: 1.35rem;
+        font-weight: 700;
+        color: #fff;
+      }
+
+      .slider-control {
+        margin: 1.5rem 0 2rem;
+      }
+
+      .slider-labels {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 0.5rem;
+        font-size: 0.9rem;
+      }
+
+      .slider-val {
+        font-family: var(--font-mono);
+        font-size: 1.3rem;
+        font-weight: 700;
+        color: #60a5fa;
+      }
+
+      input[type="range"] {
+        width: 100%;
+        height: 8px;
+        border-radius: 4px;
+        background: #2b394f;
+        outline: none;
+        -webkit-appearance: none;
+      }
+
+      input[type="range"]::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        appearance: none;
+        width: 22px;
+        height: 22px;
+        border-radius: 50%;
+        background: var(--primary);
+        cursor: pointer;
+        box-shadow: 0 0 10px var(--primary-glow);
+        border: 2px solid #fff;
+      }
+
+      .calc-results-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+        gap: 1.25rem;
+      }
+
+      .calc-result-box {
+        background: #111722;
+        border: 1px solid var(--border-subtle);
+        border-radius: 12px;
+        padding: 1.25rem;
+        text-align: center;
+      }
+
+      .calc-result-box.best {
+        border-color: #3b82f6;
+        box-shadow: 0 0 20px rgba(59, 130, 246, 0.15);
+      }
+
+      .calc-model-name {
+        font-size: 0.85rem;
+        color: var(--text-muted);
+        font-family: var(--font-mono);
+        margin-bottom: 0.5rem;
+      }
+
+      .calc-cost-usd {
+        font-family: var(--font-heading);
+        font-size: 2rem;
+        font-weight: 800;
+        color: #fff;
+      }
+
+      .calc-cost-vnd {
+        font-size: 0.85rem;
+        color: var(--success);
+        font-weight: 600;
+        margin-top: 0.25rem;
+      }
+
+      /* Callouts & Highlights */
+      .callout {
+        border-left: 4px solid var(--primary);
+        background: rgba(59, 130, 246, 0.08);
+        border-radius: 0 10px 10px 0;
+        padding: 1.25rem;
+        margin: 1.5rem 0;
+        font-size: 0.95rem;
+      }
+
+      .callout.warning {
+        border-left-color: var(--accent);
+        background: rgba(245, 158, 11, 0.08);
+      }
+
+      .callout.success {
+        border-left-color: var(--success);
+        background: rgba(16, 185, 129, 0.08);
+      }
+
+      .callout h4 {
+        margin-bottom: 0.4rem;
+        font-weight: 700;
+        color: #fff;
+      }
+
+      /* Workflow Diagram */
+      .flow-diagram {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.75rem;
+        background: #121824;
+        padding: 1.5rem;
+        border-radius: 12px;
+        border: 1px solid var(--border-subtle);
+        margin: 1.5rem 0;
+        overflow-x: auto;
+      }
+
+      .flow-step {
+        background: var(--bg-card);
+        border: 1px solid var(--border-highlight);
+        border-radius: 10px;
+        padding: 1rem 1.25rem;
+        min-width: 180px;
+        text-align: center;
+      }
+
+      .flow-step-tag {
+        font-family: var(--font-mono);
+        font-size: 0.7rem;
+        color: #60a5fa;
+        text-transform: uppercase;
+        margin-bottom: 0.35rem;
+      }
+
+      .flow-step-title {
+        font-weight: 700;
+        font-size: 0.9rem;
+        color: #fff;
+      }
+
+      .flow-arrow {
+        color: var(--text-muted);
+        font-size: 1.25rem;
+        font-weight: bold;
+      }
+
+      /* Footer */
+      footer {
+        margin-top: 4rem;
+        padding-top: 2rem;
+        border-top: 1px solid var(--border-subtle);
+        text-align: center;
+        color: var(--text-muted);
+        font-size: 0.85rem;
+      }
+
+      @media (max-width: 768px) {
+        .hero h1 {
+          font-size: 2rem;
+        }
+        .flow-diagram {
+          flex-direction: column;
+          align-items: stretch;
+        }
+        .flow-arrow {
+          transform: rotate(90deg);
+          margin: 0.25rem 0;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Hero Header -->
+    <header class="hero">
+      <div class="container">
+        <div class="badge-uit">
+          <span>🎓 UIT — ĐẠI HỌC CÔNG NGHỆ THÔNG TIN (ĐHQG-HCM)</span>
+        </div>
+        <h1>Báo Cáo Ước Tính Chi Phí</h1>
+        <p class="hero-desc">
+          Phân tích chi tiết mức tiêu hao Token và dự toán ngân sách vận hành hệ
+          thống Issue Triage tự động quy mô
+          <strong>10.000 issue/tháng</strong>.
+        </p>
+
+        <div class="meta-grid">
+          <div class="meta-item">
+            <div class="meta-label">Môn học</div>
+            <div class="meta-value">Agentic AI & LLM Systems</div>
+          </div>
+          <div class="meta-item">
+            <div class="meta-label">Bài tập</div>
+            <div class="meta-value">BTVN #2 — Issue Triage Mini-App</div>
+          </div>
+          <div class="meta-item">
+            <div class="meta-label">Quy mô giả định</div>
+            <div class="meta-value">10.000 issues / tháng</div>
+          </div>
+          <div class="meta-item">
+            <div class="meta-label">Tỷ giá quy đổi</div>
+            <div class="meta-value">1 USD = 25.400 VNĐ</div>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <main class="container">
+      <!-- PHẦN 1: ĐO TOKEN INPUT MẪU -->
+      <section>
+        <h2 class="section-title">
+          <span class="number">1</span>
+          Đo Lường Token Của Input Mẫu Thực Tế
+        </h2>
+
+        <div class="card">
+          <p style="margin-bottom: 1rem; color: var(--text-secondary)">
+            Hệ thống Issue Triage thực hiện một chu trình hoàn chỉnh gồm
+            <strong>2 round tương tác model</strong>: (1) Phân tích issue & đưa
+            ra đề xuất gọi tool <code>get_component_owner</code>; (2) Tiếp nhận
+            kết quả tra cứu và sinh phản hồi tổng hợp cuối cùng kèm phân loại
+            <code>IssueTriage</code>.
+          </p>
+
+          <div class="flow-diagram">
+            <div class="flow-step">
+              <div class="flow-step-tag">Round 1 — Request</div>
+              <div class="flow-step-title">
+                System Prompt + User Issue + Tool Schemas
+              </div>
+              <div
+                style="
+                  font-size: 0.75rem;
+                  color: var(--text-muted);
+                  margin-top: 0.35rem;
+                "
+              >
+                1.220 tokens input
+              </div>
+            </div>
+            <div class="flow-arrow">→</div>
+            <div class="flow-step">
+              <div class="flow-step-tag">Round 1 — Response</div>
+              <div class="flow-step-title">
+                Model phát sinh tool_call get_component_owner
+              </div>
+              <div
+                style="
+                  font-size: 0.75rem;
+                  color: var(--text-muted);
+                  margin-top: 0.35rem;
+                "
+              >
+                140 tokens output
+              </div>
+            </div>
+            <div class="flow-arrow">→</div>
+            <div class="flow-step">
+              <div class="flow-step-tag">App Execution</div>
+              <div class="flow-step-title">
+                execute_get_component_owner("payment")
+              </div>
+              <div
+                style="
+                  font-size: 0.75rem;
+                  color: var(--success);
+                  margin-top: 0.35rem;
+                "
+              >
+                Application nội bộ (0 token)
+              </div>
+            </div>
+            <div class="flow-arrow">→</div>
+            <div class="flow-step">
+              <div class="flow-step-tag">Round 2 — Final Call</div>
+              <div class="flow-step-title">
+                Nhận Tool Result & Sinh IssueTriage JSON
+              </div>
+              <div
+                style="
+                  font-size: 0.75rem;
+                  color: var(--text-muted);
+                  margin-top: 0.35rem;
+                "
+              >
+                1.075 input + 136 output
+              </div>
+            </div>
+          </div>
+
+          <div style="margin-top: 1.5rem">
+            <strong style="color: #fff"
+              >Dữ liệu Issue kiểm thử mẫu (Test Case 1):</strong
+            >
+            <div class="code-snippet">
+              <span class="comment"
+                >// Input mẫu thực tế kiểm thử trong BTVN2.ipynb:</span
+              >
+              "Nút thanh toán trả HTTP 500 với mọi thẻ Visa từ 14:30. Hãy triage
+              issue và cho biết team nào cần xử lý."
+            </div>
+          </div>
+
+          <!-- Token summary boxes -->
+          <div class="token-grid">
+            <div class="token-card">
+              <div class="token-card-title">Prompt Tokens (Input)</div>
+              <div class="token-card-number">2.295</div>
+              <div class="token-card-desc">
+                Gồm System Prompt, Function Tools schema, User input và Tool
+                execution result (1.220 + 1.075).
+              </div>
+            </div>
+            <div class="token-card output">
+              <div class="token-card-title">Completion Tokens (Output)</div>
+              <div class="token-card-number">276</div>
+              <div class="token-card-desc">
+                Gồm arguments của tool call (140 tokens) và đối tượng
+                IssueTriage JSON phân loại cuối cùng (136 tokens).
+              </div>
+            </div>
+            <div class="token-card total">
+              <div class="token-card-title">Tổng Token / 1 Issue</div>
+              <div class="token-card-number">2.571</div>
+              <div class="token-card-desc">
+                Tổng số token tiêu hao cho 1 chu trình xử lý end-to-end hoàn
+                chỉnh của mini-app có tool calling.
+              </div>
+            </div>
+          </div>
+
+          <div class="callout">
+            <h4>💡 Ghi chú kỹ thuật về Context Window & Đo lường Token:</h4>
+            Số lượng token được đo lường chính xác từ thuộc tính
+            <code>response.usage</code> của OpenRouter API (sử dụng tokenizer
+            chuẩn BPE). Nhờ thiết kế prompt template chuẩn chỉ và schema
+            Pydantic chặt chẽ, mỗi issue tiêu tốn khoảng 2.570 tokens cho trọn
+            vẹn 2 round hội thoại và tra cứu tool.
+          </div>
+        </div>
+      </section>
+
+      <!-- PHẦN 2: GIẢ ĐỊNH GIÁ & ĐƠN GIÁ THỊ TRƯỜNG -->
+      <section>
+        <h2 class="section-title">
+          <span class="number">2</span>
+          Giả Định Đơn Giá Các Nhà Cung Cấp (Pricing Assumptions)
+        </h2>
+
+        <div class="card">
+          <p style="margin-bottom: 1.25rem; color: var(--text-secondary)">
+            Đơn giá được cập nhật theo bảng giá chính thức từ OpenAI, DeepSeek,
+            Anthropic và OpenRouter (tính trên đơn vị
+            <strong>1.000.000 Tokens = 1M Tokens</strong>):
+          </p>
+
+          <div class="table-wrapper">
+            <table>
+              <thead>
+                <tr>
+                  <th>Mô hình / Provider</th>
+                  <th>Phân loại</th>
+                  <th>Giá Input (/1M tokens)</th>
+                  <th>Giá Output (/1M tokens)</th>
+                  <th>Ghi chú & Ưu nhược điểm</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr class="highlight-row">
+                  <td>
+                    <strong>OpenRouter Free Tier</strong><br />
+                    <span style="font-size: 0.75rem; color: var(--text-muted)"
+                      >nex-agi/nex-n2.5-pro:free hoặc gemma</span
+                    >
+                  </td>
+                  <td><span class="badge badge-free">Free Tier</span></td>
+                  <td><strong>$0.00</strong></td>
+                  <td><strong>$0.00</strong></td>
+                  <td>
+                    Phù hợp học tập, làm BTVN, kiểm thử. Giới hạn rate-limit
+                    (khoảng 20 RPM), không đảm bảo SLA cho production.
+                  </td>
+                </tr>
+                <tr>
+                  <td>
+                    <strong>OpenAI GPT-4o-mini</strong><br />
+                    <span style="font-size: 0.75rem; color: var(--text-muted)"
+                      >gpt-4o-mini-2024-07-18</span
+                    >
+                  </td>
+                  <td><span class="badge badge-prod">Khuyên dùng</span></td>
+                  <td><strong>$0.150</strong> (~3.810 ₫)</td>
+                  <td><strong>$0.600</strong> (~15.240 ₫)</td>
+                  <td>
+                    Lựa chọn tối ưu nhất cho Production: tốc độ phản hồi cực
+                    nhanh, hỗ trợ Structured Output & Function Calling chuẩn xác
+                    100%.
+                  </td>
+                </tr>
+                <tr>
+                  <td>
+                    <strong>DeepSeek V3</strong><br />
+                    <span style="font-size: 0.75rem; color: var(--text-muted)"
+                      >deepseek-chat</span
+                    >
+                  </td>
+                  <td><span class="badge badge-prod">Giá rẻ nhất</span></td>
+                  <td><strong>$0.140</strong> (~3.556 ₫)</td>
+                  <td><strong>$0.280</strong> (~7.112 ₫)</td>
+                  <td>
+                    Giá cực kỳ cạnh tranh, output token rẻ nhất. Tuy nhiên
+                    latency phụ thuộc tải máy chủ quốc tế.
+                  </td>
+                </tr>
+                <tr>
+                  <td>
+                    <strong>Claude 3.5 Haiku</strong><br />
+                    <span style="font-size: 0.75rem; color: var(--text-muted)"
+                      >claude-3-5-haiku-20241022</span
+                    >
+                  </td>
+                  <td><span class="badge badge-premium">Cao cấp</span></td>
+                  <td><strong>$0.800</strong> (~20.320 ₫)</td>
+                  <td><strong>$4.000</strong> (~101.600 ₫)</td>
+                  <td>
+                    Khả năng suy luận ngôn ngữ và hiểu ngữ cảnh kỹ thuật phần
+                    mềm xuất sắc, phù hợp phân loại issue phức tạp.
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- PHẦN 3: DỰ TOÁN CHI PHÍ CHO 10.000 ISSUE / THÁNG -->
+      <section>
+        <h2 class="section-title">
+          <span class="number">3</span>
+          Ước Tính Chi Phí Cho 10.000 Issue / Tháng
+        </h2>
+
+        <div class="card">
+          <p style="margin-bottom: 1rem; color: var(--text-secondary)">
+            Với quy mô <strong>10.000 issue/tháng</strong> dựa trên số liệu thực
+            nghiệm đo lường từ notebook:
+          </p>
+
+          <ul
+            style="
+              margin-left: 1.5rem;
+              margin-bottom: 1.5rem;
+              color: var(--text-secondary);
+              line-height: 1.8;
+            "
+          >
+            <li>
+              <strong>Tổng Input Tokens:</strong> 10.000 issues × 2.295 tokens =
+              <strong>22.950.000 tokens (22,95M tokens/tháng)</strong>
+            </li>
+            <li>
+              <strong>Tổng Output Tokens:</strong> 10.000 issues × 276 tokens =
+              <strong>2.760.000 tokens (2,76M tokens/tháng)</strong>
+            </li>
+            <li>
+              <strong>Tổng Token Lưu Chuyển:</strong>
+              <strong>25.710.000 tokens (25,71M tokens/tháng)</strong>
+            </li>
+          </ul>
+
+          <div class="table-wrapper">
+            <table>
+              <thead>
+                <tr>
+                  <th>Mô hình</th>
+                  <th>Chi phí Input</th>
+                  <th>Chi phí Output</th>
+                  <th>Tổng chi phí (USD)</th>
+                  <th>Tổng chi phí (VNĐ)</th>
+                  <th>Chi phí / 1 Issue</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr class="highlight-row">
+                  <td>
+                    <strong>OpenRouter Free Tier</strong>
+                  </td>
+                  <td>$0.00</td>
+                  <td>$0.00</td>
+                  <td><strong style="color: #34d399">$0.00</strong></td>
+                  <td><strong style="color: #34d399">0 VNĐ</strong></td>
+                  <td>0 ₫</td>
+                </tr>
+                <tr>
+                  <td>
+                    <strong>OpenAI GPT-4o-mini</strong>
+                  </td>
+                  <td>22,95M × $0.15 = $3.44</td>
+                  <td>2,76M × $0.60 = $1.66</td>
+                  <td><strong style="color: #60a5fa">$5.10</strong></td>
+                  <td><strong style="color: #60a5fa">129.501 VNĐ</strong></td>
+                  <td><strong>~12,95 VNĐ</strong></td>
+                </tr>
+                <tr>
+                  <td>
+                    <strong>DeepSeek V3</strong>
+                  </td>
+                  <td>22,95M × $0.14 = $3.21</td>
+                  <td>2,76M × $0.28 = $0.77</td>
+                  <td><strong style="color: #60a5fa">$3.99</strong></td>
+                  <td><strong style="color: #60a5fa">101.239 VNĐ</strong></td>
+                  <td><strong>~10,12 VNĐ</strong></td>
+                </tr>
+                <tr>
+                  <td>
+                    <strong>Claude 3.5 Haiku</strong>
+                  </td>
+                  <td>22,95M × $0.80 = $18.36</td>
+                  <td>2,76M × $4.00 = $11.04</td>
+                  <td><strong style="color: #fbbf24">$29.40</strong></td>
+                  <td><strong style="color: #fbbf24">746.760 VNĐ</strong></td>
+                  <td><strong>~74,68 VNĐ</strong></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer>
+      <div class="container">
+        <p>
+          Báo cáo bài tập về nhà môn Kỹ thuật xây dựng hệ thống Agentic AI -
+          Khoa Công nghệ Phần mềm - Trường Đại học Công nghệ Thông tin (UIT)
+        </p>
+        <p style="margin-top: 0.5rem; color: var(--text-muted)">
+          Nguyễn Hùng Cường - 23520201
+        </p>
+      </div>
+    </footer>
+
+    <!-- Interactive Script -->
+    <script>
+      const slider = document.getElementById("issueSlider");
+      const display = document.getElementById("issueCountDisplay");
+      const costGptUsd = document.getElementById("costGptUsd");
+      const costGptVnd = document.getElementById("costGptVnd");
+      const costDeepseekUsd = document.getElementById("costDeepseekUsd");
+      const costDeepseekVnd = document.getElementById("costDeepseekVnd");
+      const costClaudeUsd = document.getElementById("costClaudeUsd");
+      const costClaudeVnd = document.getElementById("costClaudeVnd");
+
+      const RATE_VND = 25400;
+      const INPUT_TOKENS_PER_ISSUE = 2295;
+      const OUTPUT_TOKENS_PER_ISSUE = 276;
+
+      function updateCalculation() {
+        const issues = parseInt(slider.value, 10);
+        display.textContent = issues.toLocaleString("vi-VN") + " issues/tháng";
+
+        const totalInputM = (issues * INPUT_TOKENS_PER_ISSUE) / 1000000;
+        const totalOutputM = (issues * OUTPUT_TOKENS_PER_ISSUE) / 1000000;
+
+        // GPT-4o-mini ($0.15 in, $0.60 out)
+        const gpt = totalInputM * 0.15 + totalOutputM * 0.6;
+        costGptUsd.textContent = "$" + gpt.toFixed(2);
+        costGptVnd.textContent =
+          Math.round(gpt * RATE_VND).toLocaleString("vi-VN") + " VNĐ / tháng";
+
+        // DeepSeek V3 ($0.14 in, $0.28 out)
+        const deepseek = totalInputM * 0.14 + totalOutputM * 0.28;
+        costDeepseekUsd.textContent = "$" + deepseek.toFixed(2);
+        costDeepseekVnd.textContent =
+          Math.round(deepseek * RATE_VND).toLocaleString("vi-VN") +
+          " VNĐ / tháng";
+
+        // Claude 3.5 Haiku ($0.80 in, $4.00 out)
+        const claude = totalInputM * 0.8 + totalOutputM * 4.0;
+        costClaudeUsd.textContent = "$" + claude.toFixed(2);
+        costClaudeVnd.textContent =
+          Math.round(claude * RATE_VND).toLocaleString("vi-VN") +
+          " VNĐ / tháng";
+      }
+
+      slider.addEventListener("input", updateCalculation);
+      updateCalculation();
+    </script>
+  </body>
+</html>
